@@ -107,6 +107,9 @@ errorbars.default = function (x, vertical = TRUE, horizontal = !vertical,
 	} else { 
 				y.center = center.manual
 			}
+			 
+	y.top = sapply(y,'[[',1) #pull first & second values from list to new vector 
+	y.bottom = sapply(y,'[[',2)
 			    
     if (is.null(at)) 
         at <- 1:n
@@ -122,22 +125,47 @@ errorbars.default = function (x, vertical = TRUE, horizontal = !vertical,
     hw <- cap.width/2
     if (horizontal & !is.null(y)) {
     	#horizontal graph's error bars
-        for (i in 1:n) {
-        	segments(y0 = at[i]+offset+bar.offset, x0 = y[[i]][1], x1 = y[[i]][2],
-        		col = bar.col, lwd = bar.lwd, lty = bar.lty)
-            segments(y0 = at[i]+offset+cap.offset - hw, y1 = at[i]+offset+cap.offset + hw, x0 = y[[i]], 
-                col = cap.col, lwd = cap.lwd, lty = cap.lty)
-        }
+        
+        #vectorized, should handle colors as expected
+
+        #dependent axis bar
+        segments(y0 = at+offset+bar.offset,
+        	x0 = y.top,
+        	x1 = y.bottom,
+        	col = bar.col, lwd = bar.lwd, lty = bar.lty)
+        #top cap
+        segments(y0 = at+offset+cap.offset - hw,
+        	y1 = at+offset+cap.offset + hw,
+        	x0 = y.top, 
+            col = cap.col, lwd = cap.lwd, lty = cap.lty)
+        #bottom cap
+        segments(y0 = at+offset+cap.offset - hw,
+        	y1 = at+offset+cap.offset + hw,
+        	x0 = y.bottom, 
+            col = cap.col, lwd = cap.lwd, lty = cap.lty)		
+        		
+        
+        
     }
     else if (!is.null(y)){
     	#vertical graph's error bars
-        for (i in 1:n) {
-        	segments(x0 = at[i]+offset+bar.offset, y0 = y[[i]][1], y1 = y[[i]][2],
-        		col = bar.col, lwd = bar.lwd, lty = bar.lty)
-            segments(x0 = at[i]+offset+cap.offset - hw, x1 = at[i]+offset+cap.offset + hw, y0 = y[[i]], 
-                col = cap.col, lwd = cap.lwd, lty = cap.lty
-                )
-        }
+        #vectorized, should handle colors as expected
+
+        #dependent axis bar
+        segments(x0 = at+offset+bar.offset,
+        	y0 = y.top,
+        	y1 = y.bottom,
+        	col = bar.col, lwd = bar.lwd, lty = bar.lty)
+        #top cap
+        segments(x0 = at+offset+cap.offset - hw,
+        	x1 = at+offset+cap.offset + hw,
+        	y0 = y.top, 
+            col = cap.col, lwd = cap.lwd, lty = cap.lty)
+        #bottom cap
+        segments(x0 = at+offset+cap.offset - hw,
+        	x1 = at+offset+cap.offset + hw,
+        	y0 = y.bottom, 
+            col = cap.col, lwd = cap.lwd, lty = cap.lty)
     }
     
     hw <- center.width/2
@@ -168,25 +196,29 @@ errorbars.default = function (x, vertical = TRUE, horizontal = !vertical,
 
 
 
-require(beeswarm)
-testdata = rbind(
-					data.frame(group="a", value = rnorm(20)*2+12),
-					data.frame(group="b", value = rnorm(20)*2+8),
-					data.frame(group="c", value = rnorm(20)*1+6)
-				)
-testdata = cbind(
-					testdata,
-					data.frame(subgroup = rep(c(rep("x",10),rep("y",10)),3))
-)
+# # require(beeswarm)
+# testdata = rbind(
+					# data.frame(group="a", value = rnorm(20)*2+12),
+					# data.frame(group="b", value = rnorm(20)*2+8),
+					# data.frame(group="c", value = rnorm(20)*1+6)
+				# )
+# testdata = cbind(
+					# testdata,
+					# data.frame(subgroup = rep(c(rep("x",10),rep("y",10)),3))
+# )
 
-require(beeswarm)
 
-beeswarm(value~group+subgroup,testdata,ylim=c(1,20),log=F,horizontal=F,pch=16,cex=0.75,col="gray60",bty="L")
-
-errorbars(value~group+subgroup,testdata,add=T,horizontal=F,bar.lwd=2,center.lwd=2,cap.lwd=1,cap.width=.125, error.method="sem",ci.level=.95,)
+#tests to notrun
+#require(beeswarm)
+#beeswarm(value~group+subgroup,testdata,ylim=c(1,20),log=F,horizontal=F,pch=16,cex=0.75,col="gray60",bty="L")
+#errorbars(value~group+subgroup,testdata,add=T,horizontal=F,bar.lwd=2,center.lwd=2,cap.lwd=1,cap.width=.125, error.method="sem",ci.level=.95,)
 
 #manual bars
 #errorbars(value~group+subgroup,testdata,add=T,horizontal=F,bar.lwd=2,center.lwd=2,cap.lwd=1,cap.width=.25, error.method="sem",ci.level=.95,upperbound.manual=c(5,6,7,8),lowerbound.manual=c(NA,NA,NA,1),center.manual=c(1,1,1,1))
+
+#only draw error bars
+#errorbars(value~group+subgroup,testdata,add=F,horizontal=T,bar.lwd=2,center.lwd=0,cap.lwd=1,cap.width=.25, error.method="ci",ci.level=.95,offset=.125,col=c("red","green","blue"))
+
 
 #errorbars(value~group+subgroup,testdata,add=T,horizontal=F,bar.lwd=2,center.lwd=0,cap.lwd=1,cap.width=.25, error.method="ci",ci.level=.95,offset=.125)
 
