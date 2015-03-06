@@ -100,9 +100,9 @@ errorbars.default = function (x, vertical = TRUE, horizontal = !vertical,
     
     if (is.null(center.manual)) {
     	   y.center = switch(match.arg(center.method),
-		mean = lapply(x, mean),
-		median = lapply(x, median),
-		mode = lapply(x, mode),
+		mean = sapply(x, mean),
+		median = sapply(x, median),
+		mode = sapply(x, function(x) {dn=density(x);return(dn$x[which.max(dn$y)])}), #mode using kernel density estimate
 		none = NULL)
 	} else { 
 				y.center = center.manual
@@ -171,17 +171,18 @@ errorbars.default = function (x, vertical = TRUE, horizontal = !vertical,
     hw <- center.width/2
     if (horizontal & !is.null(y.center)) {
     	#horizontal graph's marker of central tendency
-        for (i in 1:n) {
-            segments(y0 = at[i]+offset+center.offset - hw, y1 = at[i]+offset+center.offset + hw, x0 = y.center, 
-                col = center.col, lwd = center.lwd, lty = center.lty)
-        }
+		#vectorized
+        segments(y0 = at+offset+center.offset - hw,
+        	y1 = at+offset+center.offset + hw,
+        	x0 = y.center, 
+            col = center.col, lwd = center.lwd, lty = center.lty)
+        
     }
     else if (!is.null(y.center)){
-    	#vertical graph's marker of central tendency
-        for (i in 1:n) {
-            segments(x0 = at[i]+offset+center.offset - hw, x1 = at[i]+offset+center.offset + hw, y0 = y.center[[i]], 
+    	#vertical graph's marker of central tendency      
+        #vectorized
+        segments(x0 = at+offset+center.offset - hw, x1 = at+offset+center.offset + hw, y0 = y.center, 
                 col = center.col, lwd = center.lwd, lty = center.lty)
-        }
     }
     
     
@@ -217,7 +218,7 @@ errorbars.default = function (x, vertical = TRUE, horizontal = !vertical,
 #errorbars(value~group+subgroup,testdata,add=T,horizontal=F,bar.lwd=2,center.lwd=2,cap.lwd=1,cap.width=.25, error.method="sem",ci.level=.95,upperbound.manual=c(5,6,7,8),lowerbound.manual=c(NA,NA,NA,1),center.manual=c(1,1,1,1))
 
 #only draw error bars
-#errorbars(value~group+subgroup,testdata,add=F,horizontal=T,bar.lwd=2,center.lwd=0,cap.lwd=1,cap.width=.25, error.method="ci",ci.level=.95,offset=.125,col=c("red","green","blue"))
+#errorbars(value~group+subgroup,testdata,add=T,horizontal=F,bar.lwd=2,center.lwd=1,center.method="mode",center.width=1,cap.lwd=1,cap.width=.25, error.method="ci",ci.level=.95,offset=.125,col=c("red","green","blue"))
 
 
 #errorbars(value~group+subgroup,testdata,add=T,horizontal=F,bar.lwd=2,center.lwd=0,cap.lwd=1,cap.width=.25, error.method="ci",ci.level=.95,offset=.125)
