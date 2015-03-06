@@ -51,7 +51,7 @@ connectionlines.formula = function (formula, data = NULL, ..., subset, na.action
 connectionlines.default = function (x,
 	comparisons = "all", labels = NULL, 
 	vertical = TRUE, horizontal = !vertical, 
-    line.position = c('above.max','below.min','top','bottom'),
+    line.position = c('above.max','below.min','top','bottom','above.plot','below.plot'),
     col = par("col"), lty = par("lty"), lwd = par("lwd"),
     draw.ticks=TRUE, drop.ticks=TRUE, tick.length = NULL, tick.spacing = NULL,
     offset = NULL, spacing = NULL, units=c('inches','cm'), labels.offset=NULL, labels.rotate=T,
@@ -171,8 +171,10 @@ connectionlines.default = function (x,
 	drawdirection = switch(match.arg(line.position),
 					above.max = 1,
 					below.min = -1,
-					top = 1, 
-					bottom = -1
+					top = 1, # build stack of connectors from top down! (flip draw direction later)
+					bottom = -1, # build stack of connectors from bottom up! (flip draw direction later)
+					above.plot = 1, 
+					below.plot = -1
 				)
 				
 	#automatically set the offset if not specified based on direction:
@@ -185,9 +187,11 @@ connectionlines.default = function (x,
 						above.max = sapply(x, max),
 						below.min = sapply(x, min),
 						#top is the top of the plot region, which we use grconvert to pull out
+						above.plot = , # same as top, we want the top of the plot
 						top = switch(horizontal+1,
 							rep(grconvertY(1,from="npc",to="user"),length(x)), #horizontal is false or zero, +1 gets to index 1
 							rep(grconvertX(1,from="npc",to="user"),length(x))), #horizontal is true , +1 gets to index 2
+						below.plot = , #same as bottom, we want the bottom of the plot
 						bottom = switch(horizontal+1,
 							rep(grconvertY(0,from="npc",to="user"),length(x)), #horizontal is false or zero, +1 gets to index 1
 							rep(grconvertX(0,from="npc",to="user"),length(x))), #horizontal is true , +1 gets to index 2
@@ -202,9 +206,13 @@ connectionlines.default = function (x,
     #find the closest data boundary for each line, by finding the max/min value the line passes
     #fill with zeros for the ones not drawing next to data
     linebounds = switch(match.arg(line.position),
-						top = ,
-						above.max = mapply(function(a,b) {max(groupbounds[a:b])},newindexfrom,newindexto),
 						bottom = ,
+						top = ,
+						above.plot = ,
+						below.plot = rep(groupbounds[1],length(indexfrom)), 	
+							# all of the above just start at a flat line (groupbounds contains a repeated value)
+							# so we just recycle that here for each line to draw.
+						above.max = mapply(function(a,b) {max(groupbounds[a:b])},newindexfrom,newindexto),
 						below.min = mapply(function(a,b) {min(groupbounds[a:b])},newindexfrom,newindexto)
 				)
 
@@ -212,91 +220,120 @@ connectionlines.default = function (x,
     draworder = switch(match.arg(line.position),
 					above.max = order(linebounds,drawlength,drawfrom,decreasing=FALSE),
 					below.min = order(-linebounds,drawlength,drawfrom,decreasing=FALSE),
-					top = , #inherits next
+					above.plot = ,
+					below.plot = ,
+					top = , # all these the same as bottom
 					bottom = order(drawlength,drawfrom,decreasing=FALSE)
 				)
-	
 
- 	
+
  	# current bounds will be used to "grow" the bounding rectangle not to draw inside
  	currentgroupbounds = groupbounds
  	currentlinebounds = linebounds
  	
- 	
-	linepositions = rep(NA,length(draworder))		
+	linepositions = rep(NA,length(draworder))
+	droptickfrompositions = rep(NA,length(draworder))
+	dropticktopositions = rep(NA,length(draworder))		
  	 
  		for (i in draworder) {
- 			#Sys.sleep(0.25)
- 			linepositions[i] = switch(horizontal + 1,
+ 			 			
+ 			linepositions[i] = switch(horizontal + 1, #hack to use switch() as explained:
  				in2uy(u2iny(currentlinebounds[i])+drawdirection*spacing), #horizontal is false, false + 1 = 1
  				in2ux(u2inx(currentlinebounds[i])+drawdirection*spacing)) #horizontal is true, true + 1 = 2
 
-			if (horizontal == FALSE) { 
- 				segments(x0=drawfrom[i],x1=drawto[i],y0=in2uy(u2iny(linepositions[i])+offset),lty=lty,col=col,lwd=lwd)
- 			} else {
- 				segments(y0=drawfrom[i],y1=drawto[i],x0=in2ux(u2inx(linepositions[i])+offset),lty=lty,col=col,lwd=lwd)
- 			}
- 			if (draw.ticks == TRUE) {
- 				if (drop.ticks == TRUE) {
- 					if (horizontal == FALSE) { #drop ticks vertical
-			 			segments(x0=drawfrom[i],
-			 						y0=in2uy(u2iny(linepositions[i])+offset),
-			 						y1=in2uy(u2iny(currentgroupbounds[newindexfrom[i]]) +
-			 						drawdirection*tick.spacing+offset),
-			 						lty=lty,col=col,lwd=lwd)
-			 			segments(x0=drawto[i],
-			 						y0=in2uy(u2iny(linepositions[i])+offset),
-			 						y1=in2uy(u2iny(currentgroupbounds[newindexto[i]]) +
-			 						drawdirection*tick.spacing+offset),
-			 						lty=lty,col=col,lwd=lwd)
-		 						} else { #drop ticks horizontal
-			 					segments(y0=drawfrom[i],
-			 						x0=in2ux(u2inx(linepositions[i])+offset),
-			 						x1=in2ux(u2inx(currentgroupbounds[newindexfrom[i]]) +
-			 						drawdirection*tick.spacing+offset),
-			 						lty=lty,col=col,lwd=lwd)
-			 			segments(y0=drawto[i],
-			 						x0=in2ux(u2inx(linepositions[i])+offset),
-			 						x1=in2ux(u2inx(currentgroupbounds[newindexto[i]]) +
-			 						drawdirection*tick.spacing+offset),
-			 						lty=lty,col=col,lwd=lwd)
-		 						}
-				} else {
-		 			if (horizontal == FALSE) { #non-dropped ticks vertical
-			 			segments(x0=drawfrom[i],
-			 						y0=in2uy(u2iny(linepositions[i])+offset),
-			 						y1=in2uy(u2iny(linepositions[i])-drawdirection*tick.length+offset),
-			 						lty=lty,col=col,lwd=lwd)
-			 			segments(x0=drawto[i],
-			 						y0=in2uy(u2iny(linepositions[i])+offset),
-			 						y1=in2uy(u2iny(linepositions[i])-drawdirection*tick.length+offset),
-			 						lty=lty,col=col,lwd=lwd)	
-					} else { #non-dropped ticks horizontal
-			 			segments(y0=drawfrom[i],
-			 						x0=in2ux(u2inx(linepositions[i])+offset),
-			 						x1=in2ux(u2inx(linepositions[i])-drawdirection*tick.length+offset),
-			 						lty=lty,col=col,lwd=lwd)
-			 			segments(y0=drawto[i],
-			 						x0=in2ux(u2inx(linepositions[i])+offset),
-			 						x1=in2ux(u2inx(linepositions[i])-drawdirection*tick.length+offset),
-			 						lty=lty,col=col,lwd=lwd)	
-					}
-				}
- 			}
-  			
+			# record where ticks will drop to, if we draw them that way
+
+			droptickfrompositions[i] = currentgroupbounds[newindexfrom[i]]
+			dropticktopositions[i] = currentgroupbounds[newindexto[i]]
+
  			# these coordinates are now occupado!
  			currentgroupbounds[newindexfrom[i]:newindexto[i]] = linepositions[i]
  			
  			
  			currentlinebounds = switch(match.arg(line.position),
-						top = ,
+						top = , # build bottom up
+						above.plot = ,
 						above.max = mapply(function(a,b) {max(currentgroupbounds[a:b])},newindexfrom,newindexto),
-						bottom = ,
+						bottom = , # build top down
+						below.plot = ,
 						below.min = mapply(function(a,b) {min(currentgroupbounds[a:b])},newindexfrom,newindexto)
 						)
+						
 			
  			
 		}
+		
+		if (horizontal == FALSE) {
+			if (match.arg(line.position) == "top") { 
+					offset = offset - (u2iny(max(currentgroupbounds)) - u2iny(max(groupbounds))) #move down into the plot area!
+				} else if (match.arg(line.position) == "bottom") {
+					offset = offset + (u2iny(min(groupbounds)) - u2iny(min(currentgroupbounds))) #move up into the plot area!
+				}
+		} else { # the same for horizontal plots!
+			if (match.arg(line.position) == "top") { 
+					offset = offset - (u2inx(max(currentgroupbounds)) - u2inx(max(groupbounds))) #move left into the plot area!
+				} else if (match.arg(line.position) == "bottom") {
+					offset = offset + (u2inx(min(groupbounds)) - u2inx(min(currentgroupbounds))) #move right into the plot area!
+				}
+		}
+		
+		#draw segments (vectorized)
+		if (horizontal == FALSE) { #vertical 				
+ 				segments(x0=drawfrom,x1=drawto,y0=in2uy(u2iny(linepositions)+offset),lty=lty,col=col,lwd=lwd)
+ 			} else { #horizontal
+ 				segments(y0=drawfrom,y1=drawto,x0=in2ux(u2inx(linepositions)+offset),lty=lty,col=col,lwd=lwd)
+ 			}
+		
+		#draw ticks (vectorized)
+			if (draw.ticks == TRUE) {
+ 				if (drop.ticks == TRUE) {
+ 					if (horizontal == FALSE) { #drop ticks vertical
+		 			segments(x0=drawfrom,
+		 						y0=in2uy(u2iny(linepositions)+offset),
+		 						y1=in2uy(u2iny(droptickfrompositions) +
+		 						drawdirection*tick.spacing+offset),
+		 						lty=lty,col=col,lwd=lwd)
+		 			segments(x0=drawto,
+		 						y0=in2uy(u2iny(linepositions)+offset),
+		 						y1=in2uy(u2iny(dropticktopositions) +
+		 						drawdirection*tick.spacing+offset),
+		 						lty=lty,col=col,lwd=lwd)
+	 						} else { #drop ticks horizontal
+		 					segments(y0=drawfrom,
+		 						x0=in2ux(u2inx(linepositions)+offset),
+		 						x1=in2ux(u2inx(droptickfrompositions) +
+		 						drawdirection*tick.spacing+offset),
+		 						lty=lty,col=col,lwd=lwd)
+		 			segments(y0=drawto,
+		 						x0=in2ux(u2inx(linepositions)+offset),
+		 						x1=in2ux(u2inx(dropticktopositions) +
+		 						drawdirection*tick.spacing+offset),
+		 						lty=lty,col=col,lwd=lwd)
+	 						}
+			} else {
+	 			if (horizontal == FALSE) { #non-dropped ticks vertical
+		 			segments(x0=drawfrom,
+		 						y0=in2uy(u2iny(linepositions)+offset),
+		 						y1=in2uy(u2iny(linepositions)-drawdirection*tick.length+offset),
+		 						lty=lty,col=col,lwd=lwd)
+		 			segments(x0=drawto,
+		 						y0=in2uy(u2iny(linepositions)+offset),
+		 						y1=in2uy(u2iny(linepositions)-drawdirection*tick.length+offset),
+		 						lty=lty,col=col,lwd=lwd)	
+				} else { #non-dropped ticks horizontal
+		 			segments(y0=drawfrom,
+		 						x0=in2ux(u2inx(linepositions)+offset),
+		 						x1=in2ux(u2inx(linepositions)-drawdirection*tick.length+offset),
+		 						lty=lty,col=col,lwd=lwd)
+		 			segments(y0=drawto,
+		 						x0=in2ux(u2inx(linepositions)+offset),
+		 						x1=in2ux(u2inx(linepositions)-drawdirection*tick.length+offset),
+		 						lty=lty,col=col,lwd=lwd)	
+				}
+			}
+ 		}
+		
+		
 		
 		if (!is.null(labels)) {
 			for (i in draworder) {
@@ -352,12 +389,8 @@ connectionlines.default = function (x,
 #connectionlines(value~group+subgroup,testdata,spacing=.1,comparisons="all",labels=plabels,line.position="above.max",at=c(3.5,2:6),drop.ticks=T,lwd=2)
 #connectionlines(value~group+subgroup,testdata,comparisons=comps,labels=plabels,line.position="top",horizontal=T,draw.ticks=T,drop.ticks=T,labels.rotate=F,xpd=T)
 
-
-
 #connectionlines(value~group+subgroup,testdata,spacing=.2,comparisons=comps,labels=plabels,line.position="top",
 #labels.offset=-1/32,offset=-1/4)
-
-
 
 ### TO DO
 #DONE - use real life coordinates to draw, allowing for log scales
@@ -365,6 +398,9 @@ connectionlines.default = function (x,
 #DONE - add labeling
 #DONE draw above/below axes
 #DONE add back processing for "at" parameter - this may cause collisions if things get _reordered_!
-# vectorize drawing commands
-#
-#WONTFIX allow specification of labels and comparisons by name not position
+#DONE vectorize drawing commands
+#DONE add drawing above top/bottom axes
+
+#TODO add pixel distance specifying mode
+#TODO? vectorize label drawing - is this useful or neccesary?
+#CANTFIX? allow specification of labels and comparisons by name not position
