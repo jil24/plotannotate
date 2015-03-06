@@ -23,9 +23,10 @@ in2uy = function(y) {
 	return(out)
 	
 }
-
+#' @export
 connectionlines = function (x, ... ) { UseMethod("connectionlines")}
 
+#' @export
 connectionlines.formula = function (formula, data = NULL, ..., subset, na.action = NULL) 
 {
     if (missing(formula) || (length(formula) != 3L)) 
@@ -46,6 +47,7 @@ connectionlines.formula = function (formula, data = NULL, ..., subset, na.action
     connectionlines(split(mf[[response]], mf[-response]), ...)
 }
 
+#' @export
 connectionlines.default = function (x,
 	comparisons = "all", labels = NULL, 
 	vertical = TRUE, horizontal = !vertical, 
@@ -332,7 +334,6 @@ connectionlines.default = function (x,
 #require(beeswarm)
 #beeswarm(value~group+subgroup,testdata,ylim=c(1,30),log=T,horizontal=F,pch=16,cex=0.75,col="gray60",bty="L")
 #beeswarm(value~group+subgroup,testdata,xlim=c(1,30),log=T,horizontal=T,pch=16,cex=0.75,col="gray60",bty="L")
-
 
 #connectionlines(value~group+subgroup,testdata,line.position="below.min",draw.ticks=T,drop.ticks=T,xpd=T)
 

@@ -1,7 +1,9 @@
 #This is based off the "bxplot" function included in the beeswarm package by Aron Ecklund
 
+#' @export
 errorbars=function (x, ...) { UseMethod("errorbars") }
 
+#' @export
 errorbars.formula = function (formula, data = NULL, ..., subset, na.action = NULL) 
 {
     if (missing(formula) || (length(formula) != 3L)) 
@@ -48,6 +50,7 @@ error.method.ci = function (x,level)
 	return(c(mx+semx*tvalue,mx-semx*tvalue))
 }
 
+#' @export
 errorbars.default = function (x, vertical = TRUE, horizontal = !vertical, 
     add = FALSE,
     error.method = c('sem','ci','none'), ci.level = 0.95,
