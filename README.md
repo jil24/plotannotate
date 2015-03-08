@@ -24,7 +24,3 @@ based essentially on my own needs.
 _Note 1_: Since I wrote the `errorbars()` function I discovered the more mature
 `gplots` CRAN package that contains the function `plotCI()`, which performs a
 similar task and may be a better choice if it meets your needs.
-
-_Note 2_: More advanced graphing frameworks such as ggplot2 provide many more
-features than this and may be a more appropriate choice, depending on your
-desired application.
