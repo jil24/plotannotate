@@ -1,6 +1,6 @@
 # A simple plain text markup translator that outputs R plotmath expressions.
 # Does some common things people shouldn't need to learn plotmath to do
-# Accepts a string, returns a string that can be eval()'d to make the expression.
+# Accepts a string, returns a string that can be parse()'d to make the expression.
 
 # this is obviously not intended for math, it's intended to make it easier to hijack the plotmath engine
 # to do inintended things.
@@ -191,12 +191,9 @@ simpleFormat <- function(string) {
 	#finally strip dots
 	chunks <- gsub('^(\\.\\.\\.){1}?+(.*?)(\\.\\.\\.){1}?+$','\\2', chunks)
 
-
-
 	#quote the ones that didnt have dots
-
 	chunks[!hasdots] <- paste0('"',chunks[!hasdots],'"')
-
+	
 	hasleadingtildes <- grepl('^(\\~\\~\\~)+(.*?)$',chunks)
 	hastrailingtildes <- grepl('^(.*?)(\\~\\~\\~)+$',chunks)
 	isfirst <- c(TRUE,rep(FALSE,length(chunks)-1))
