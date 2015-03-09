@@ -111,7 +111,7 @@ split.before.and.after <- function(stringvector,pattern) {
 simpleFormat <- function(string) {
 	chunks = string
 	if(is.list(chunks)) {
-		chunks<-lapply(chunks,simpleformat)
+		chunks<-lapply(chunks,simpleFormat)
 		out = ""
 		for (i in chunks[1:length(chunks)-1]) {
 			out = paste0(out,"atop(",i[[1]],",")
@@ -127,7 +127,7 @@ simpleFormat <- function(string) {
 
 	chunks <- unlist(strsplit(chunks,'\\n',fixed=T))
 	if(length(chunks)>1) {
-			return(simpleformat(as.list(chunks)))} # handle that newline
+			return(simpleFormat(as.list(chunks)))} # handle that newline
 	
 	chunks <- split.and.add.between(chunks,'\\*','*', fixed=T)
 	chunks <- split.and.add.between(chunks,'\\_','_', fixed=T)
