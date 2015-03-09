@@ -15,10 +15,9 @@
 
 # accepts a single instance of \n for newline (remember to double up the \ in scripts or command window)
 # it can only handle one, since this is a hack that uses atop()
-# if you provide a list as input it will interpret each item as a seperate line.
-# to "translate" multiple strings, use sapply instead.
+# if you provide a list as input it will interpret each item as a seperate line. A character vector will produce a vector of formatted lines.
 
-# special characters *, _, \, and ^, need escaping with \ (remember R will eat one of your \s before so you'll need
+# special characters *, _, \, and ^, need escaping with \ (remember R will eat one of your \s so you'll need
 # to double it in scripts or the command window). three . in succession are reserved symbols, 
 # break them up as so .\\.\\.\\.
 
@@ -122,8 +121,7 @@ simpleFormat <- function(string) {
 	}	
 
 	#if not a list but length >1
-	if(length(chunks)>1) {stop("not vectorized - use sapply")}
-
+	if(length(chunks)>1) {return(as.vector(sapply(chunks,simpleFormat)))}
 
 	chunks <- unlist(strsplit(chunks,'\\n',fixed=T))
 	if(length(chunks)>1) {
