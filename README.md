@@ -21,6 +21,14 @@ based on tasks I had to do many times as datasets grew.
   `plotmath` expressions for bold, italic, superscript, subscript. Basically 
   things you might want in a text label (not math).
 
+# Installation
+At an R console, issue these commands:
+```
+install.packages("devtools")
+library("devtools")
+install_github("jil24/plotannotate")
+```
+
 _Note 1_: Since I wrote the `errorbars()` function I discovered the more mature
 `gplots` CRAN package that contains the function `plotCI()`, which performs a
 similar task and may be a better choice if it meets your needs.
